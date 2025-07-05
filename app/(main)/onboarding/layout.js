@@ -1,8 +1,9 @@
-import React from 'react';
+// ✅ Fixed layout.jsx
+import React from 'react'
 
 const MainLayout = ({ children }) => {
   return (
-    <div>
+    <div className='container mx-auto mt-24 mb-20'>
       {children}
     </div>
   );
