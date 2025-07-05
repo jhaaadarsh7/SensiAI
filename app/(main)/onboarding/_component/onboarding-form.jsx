@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
 import {
   Card,
   CardContent,
@@ -26,11 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import useFetch from "@/hooks/use-fetch";
 import { onboardingSchema } from "@/app/lib/schema";
 import { updateUser } from "@/actions/user";
 
-const OnboardingForm = ({ industries }) => {
+const OnboardingForm = ({ industries = [] }) => {
   const router = useRouter();
   const [selectedIndustry, setSelectedIndustry] = useState(null);
 
@@ -62,6 +64,7 @@ const OnboardingForm = ({ industries }) => {
       });
     } catch (error) {
       console.error("Onboarding error:", error);
+      toast.error("Something went wrong while submitting the form.");
     }
   };
 
@@ -89,14 +92,14 @@ const OnboardingForm = ({ industries }) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Industry */}
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
               <Select
                 onValueChange={(value) => {
                   setValue("industry", value);
-                  setSelectedIndustry(
-                    industries.find((ind) => ind.id === value)
-                  );
+                  const found = industries.find((ind) => ind.id === value);
+                  setSelectedIndustry(found || null);
                   setValue("subIndustry", "");
                 }}
               >
@@ -107,7 +110,7 @@ const OnboardingForm = ({ industries }) => {
                   <SelectGroup>
                     <SelectLabel>Industries</SelectLabel>
                     {industries.map((ind) => (
-                      <SelectItem key={ind.id} value={ind.id}>
+                      <SelectItem key={ind.id} value={String(ind.id)}>
                         {ind.name}
                       </SelectItem>
                     ))}
@@ -121,7 +124,8 @@ const OnboardingForm = ({ industries }) => {
               )}
             </div>
 
-            {watchIndustry && (
+            {/* Sub Industry */}
+            {watchIndustry && selectedIndustry?.subIndustries?.length > 0 && (
               <div className="space-y-2">
                 <Label htmlFor="subIndustry">Specialization</Label>
                 <Select
@@ -133,8 +137,8 @@ const OnboardingForm = ({ industries }) => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Specializations</SelectLabel>
-                      {selectedIndustry?.subIndustries.map((sub) => (
-                        <SelectItem key={sub} value={sub}>
+                      {selectedIndustry.subIndustries.map((sub) => (
+                        <SelectItem key={sub} value={String(sub)}>
                           {sub}
                         </SelectItem>
                       ))}
@@ -149,6 +153,7 @@ const OnboardingForm = ({ industries }) => {
               </div>
             )}
 
+            {/* Experience */}
             <div className="space-y-2">
               <Label htmlFor="experience">Years of Experience</Label>
               <Input
@@ -166,6 +171,7 @@ const OnboardingForm = ({ industries }) => {
               )}
             </div>
 
+            {/* Skills */}
             <div className="space-y-2">
               <Label htmlFor="skills">Skills</Label>
               <Input
@@ -181,6 +187,7 @@ const OnboardingForm = ({ industries }) => {
               )}
             </div>
 
+            {/* Bio */}
             <div className="space-y-2">
               <Label htmlFor="bio">Professional Bio</Label>
               <Textarea
@@ -194,6 +201,7 @@ const OnboardingForm = ({ industries }) => {
               )}
             </div>
 
+            {/* Submit */}
             <Button type="submit" className="w-full" disabled={updateLoading}>
               {updateLoading ? (
                 <>

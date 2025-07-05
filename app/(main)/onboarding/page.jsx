@@ -1,6 +1,7 @@
+// ✅ page.jsx (Server Component)
 import { getUserOnboardingStatus } from "@/actions/user";
 import { industries } from "@/Data/industries";
-import { redirect } from "next/navigation"; // ✅ Fixed import
+import { redirect } from "next/navigation";
 import OnboardingForm from "./_component/onboarding-form";
 
 const Page = async () => {
@@ -12,7 +13,7 @@ const Page = async () => {
 
   return (
     <main>
-      <OnboardingForm industries={industries} /> {/* ✅ Correct JSX */}
+      <OnboardingForm industries={industries} />
     </main>
   );
 };
