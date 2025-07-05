@@ -8,62 +8,58 @@ export async function updateUser(data) {
   const { userId } = await auth();
   if (!userId) throw new Error("User not authenticated");
 
-  // Find user by clerkUserId
-  const user = await db.user.findUnique({
-    where: {
-      clerkUserId: userId,
-    },
-  });
-
-  if (!user) throw new Error("User not found");
-
   try {
-    const result = await db.$transaction(
-      async (tx) => {
-        // Find industryInsight by industry string (not industryId)
-        let industryInsight = await tx.industryInsight.findUnique({
-          where: {
-            industry: data.industry, // Correct field
-          },
-        });
+    // 1. Check if industry already exists
+    let industryInsight = await db.industryInsight.findUnique({
+      where: { industry: data.industry },
+    });
 
-        // If not found, create new industryInsight record
-      if (!user.industryInsight) {
-        const insights = await generateAIInsights(data.industry);
-    
-         industryInsight = await db.industryInsight.create({
+    // 2. If not found, create it *outside* transaction
+    if (!industryInsight) {
+      const insights = await generateAIInsights(data.industry);
+
+      try {
+        industryInsight = await db.industryInsight.create({
           data: {
             industry: data.industry,
             ...insights,
             nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            growthRate: 0,
+            demandLevel: "Medium",
+            marketOutlook: "Neutral",
+            salaryRanges: [],
+            topSkills: [],
+            keyTrends: [],
+            recommendedSkills: [],
           },
         });
-    
+      } catch (err) {
+        if (err.code === "P2002") {
+          industryInsight = await db.industryInsight.findUnique({
+            where: { industry: data.industry },
+          });
+        } else {
+          throw err;
+        }
       }
+    }
 
-        // Update user profile info
-        const updatedUser = await tx.user.update({
-          where: {
-            clerkUserId: userId,
-          },
-          data: {
-            industry: data.industry,
-            experience: data.experience,
-            bio: data.bio,
-            skills: data.skills,
-          },
-        });
+    // 3. Now safe to run fast DB update inside transaction
+    const updatedUser = await db.$transaction(async (tx) => {
+      return await tx.user.update({
+        where: { clerkUserId: userId },
+        data: {
+          industry: data.industry,
+          experience: data.experience,
+          bio: data.bio,
+          skills: data.skills,
+        },
+      });
+    });
 
-        return { updatedUser, industryInsight };
-      },
-      {
-        timeout: 10000,
-      }
-    );
-
-    return { success: true, ...result };
+    return { success: true, updatedUser, industryInsight };
   } catch (error) {
-    console.error("Error updating user and industry:", error.message);
+    console.error("❌ Failed to update profile:", error);
     throw new Error("Failed to update profile: " + error.message);
   }
 }
@@ -74,21 +70,15 @@ export async function getUserOnboardingStatus() {
 
   try {
     const user = await db.user.findUnique({
-      where: {
-        clerkUserId: userId,
-      },
-      select: {
-        industry: true,
-      },
+      where: { clerkUserId: userId },
+      select: { industry: true },
     });
 
     if (!user) throw new Error("User not found");
 
-    return {
-      isOnboarded: !!user.industry,
-    };
+    return { isOnboarded: !!user.industry };
   } catch (error) {
-    console.error("Error fetching user onboarding status:", error.message);
+    console.error("❌ Failed to fetch onboarding status:", error);
     throw new Error("Failed to fetch onboarding status");
   }
 }

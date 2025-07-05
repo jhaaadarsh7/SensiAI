@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "build": "prisma generate && next build",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -30,6 +29,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^1.5.11",
     "html2pdf.js": "^0.10.3",
     "ingest": "^1.0.0",
     "inngest": "^3.39.2",
@@ -46,6 +47,7 @@
     "recharts": "^3.0.2",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
     "zod": "^3.25.74"
   },
   "devDependencies": {
